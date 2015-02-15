@@ -1,5 +1,5 @@
 /*
-   Copyright 2012-2014 Michael Pozhidaev <msp@altlinux.org>
+   Copyright 2012-2015 Michael Pozhidaev <msp@altlinux.org>
 
    This file is part of the Luwrain.
 
@@ -16,16 +16,12 @@
 
 package org.luwrain.app.fetch;
 
-//TODO:Proper empty line below;
+import java.util.*;
 
 import org.luwrain.core.*;
 import org.luwrain.core.events.*;
 import org.luwrain.controls.*;
-import org.luwrain.pim.StoredMailAccount;
-import org.luwrain.pim.PimManager;
-import org.luwrain.pim.MailStoring;
-import javax.mail.*;
-import java.util.*;
+import org.luwrain.extensions.pim.*;
 
 class FetchArea extends SimpleArea
 {

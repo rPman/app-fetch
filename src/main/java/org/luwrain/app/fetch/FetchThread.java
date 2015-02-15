@@ -1,5 +1,5 @@
 /*
-   Copyright 2012-2014 Michael Pozhidaev <msp@altlinux.org>
+   Copyright 2012-2015 Michael Pozhidaev <msp@altlinux.org>
 
    This file is part of the Luwrain.
 
@@ -20,8 +20,8 @@ import java.net.*;
 import java.util.*;
 import org.luwrain.core.*;
 import org.luwrain.core.events.*;
-import org.luwrain.pim.*;
-import org.luwrain.network.*;
+import org.luwrain.extensions.pim.*;
+//import org.luwrain.network.*;
 
 class FetchThread implements Runnable
 {
@@ -38,65 +38,9 @@ class FetchThread implements Runnable
 	this.messageArea = messageArea;
     }
 
-    private void fetchMail()
-    {
-	MailStoring mailStoring = luwrain.getPimManager().getMailStoring();//FIXME:Must be with new connection since in separate thread;
-	if (mailStoring == null)
-	{
-	    message(stringConstructor.noMailStoring());
-	    return;
-	}
-	StoredMailAccount[] accounts;
-	try {
-	    accounts = mailStoring.loadMailAccounts();
-	}
-	catch(Exception e)
-	{
-	    message(stringConstructor.mailAccountsProblem());
-	    Log.error("fetch", "the problem  while getting a list of mail accounts:" + e.getMessage());
-	    e.printStackTrace();
-	    return;
-	}
-	if (accounts == null || accounts.length < 1)
-	{
-	    message(stringConstructor.noMailAccounts());
-	    return;
-	}
-	for(StoredMailAccount account: accounts)
-	{
-	    try {
-		fetchMailFromAccount(mailStoring, account);
-	    }
-	    catch (Exception e)
-	    {
-		message(stringConstructor.mailErrorWithAccount(account.getName()));
-		Log.error("fetch", "the problem while fetching mail from " + account.getName() + ":" + e.getMessage());
-		e.printStackTrace();
-	    }
-	}
-    }
-
-    private void fetchMailFromAccount(MailStoring mailStoring, StoredMailAccount account) throws Exception
-    {
-	if (mailStoring == null || account == null)
-	    return;
-	StoredMailGroup mailGroup = mailStoring.loadGroupByUri("mailgrp:2");//FIXME:
-	if (mailGroup == null)
-	    return;
-	message(stringConstructor.readingMailFromAccount(account.getName()));
-	IncomingMailConsumer consumer = new IncomingMailConsumer(mailStoring, mailGroup);
-	if (account.getProtocol() == MailAccount.POP3_SSL)
-	{
-	    PopSslFetch popSslFetch = new PopSslFetch(consumer);
-	    popSslFetch.fetch(account.getHost(), account.getPort(), account.getLogin(), account.getPasswd());//FIXME:Password;;
-	} else
-	    Log.warning("fetch", "unknown protocol of incoming account" + account.getProtocol());
-	message(stringConstructor.fetchedMailMessages(consumer.getCount()));
-    }
-
     private void fetchNews()
     {
-	NewsStoring newsStoring = luwrain.getPimManager().getNewsStoring();//FIXME:In independent connection;
+	NewsStoring newsStoring = null;//luwrain.getPimManager().getNewsStoring();//FIXME:In independent connection;
 	if (newsStoring == null)
 	{
 	    Log.error("fetch", "No news storing object");
@@ -155,7 +99,6 @@ class FetchThread implements Runnable
     public void run()
     {
 	done = false;
-	fetchMail();
 	fetchNews();
 	message(stringConstructor.fetchingCompleted());
 	done = true;

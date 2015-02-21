@@ -27,7 +27,7 @@ public class FetchApp implements Application, Actions
 
     public boolean onLaunch(Luwrain luwrain)
     {
-	Object o = Langs.requestStringConstructor("fetch");
+	Object o = luwrain.i18n().getStrings("luwrain.fetch");
 	if (o == null)
 	{
 	    Log.error("fetch", "no string constructor for fetch application");

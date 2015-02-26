@@ -25,7 +25,7 @@ public class FetchApp implements Application, Actions
     private FetchArea fetchArea;
     private FetchThread fetchThread ;
 
-    public boolean onLaunch(Luwrain luwrain)
+    @Override public boolean onLaunch(Luwrain luwrain)
     {
 	Object o = luwrain.i18n().getStrings("luwrain.fetch");
 	if (o == null)
@@ -37,6 +37,11 @@ public class FetchApp implements Application, Actions
 	stringConstructor = (StringConstructor)o;
 	fetchArea = new FetchArea(luwrain, this, stringConstructor);
 	return true;
+    }
+
+    @Override public String getAppName()
+    {
+	return stringConstructor.appName();
     }
 
     public void launchFetching()

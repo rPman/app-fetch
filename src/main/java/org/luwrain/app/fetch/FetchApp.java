@@ -21,52 +21,48 @@ import org.luwrain.core.*;
 public class FetchApp implements Application, Actions
 {
     private Luwrain luwrain;
-    private StringConstructor stringConstructor;
+    private Strings strings;
     private FetchArea fetchArea;
     private FetchThread fetchThread ;
 
     @Override public boolean onLaunch(Luwrain luwrain)
     {
-	Object o = luwrain.i18n().getStrings("luwrain.fetch");
-	if (o == null)
-	{
-	    Log.error("fetch", "no string constructor for fetch application");
+	final Object o = luwrain.i18n().getStrings("luwrain.fetch");
+	if (o == null || !(o instanceof Strings))
 	    return false;
-	}
 	this.luwrain = luwrain;
-	stringConstructor = (StringConstructor)o;
-	fetchArea = new FetchArea(luwrain, this, stringConstructor);
+	strings = (Strings)o;
+	fetchArea = new FetchArea(luwrain, this, strings);
 	return true;
     }
 
     @Override public String getAppName()
     {
-	return stringConstructor.appName();
+	return strings.appName();
     }
 
-    public void launchFetching()
+    @Override public void launchFetching()
     {
 	if (fetchThread != null && !fetchThread.done)
 	{
-	    luwrain.message(stringConstructor.processAlreadyRunning());
+	    luwrain.message(strings.processAlreadyRunning(), Luwrain.MESSAGE_ERROR);
 	    return;
 	}
 	fetchArea.clear();
-	fetchThread = new FetchThread(luwrain, stringConstructor, fetchArea);
-	Thread t = new Thread(fetchThread);
-	t.start();
+	fetchThread = new FetchThread(luwrain, strings, fetchArea);
+	new Thread(fetchThread).start();
     }
 
-    public AreaLayout getAreasToShow()
+    @Override public AreaLayout getAreasToShow()
     {
 	return new AreaLayout(fetchArea);
     }
 
-    public void close()
+    @Override public void close()
     {
 	if (fetchThread != null && !fetchThread.done)
 	{
-	    luwrain.message(stringConstructor.processNotFinished());
+	    luwrain.message(strings.processNotFinished(), Luwrain.MESSAGE_ERROR);
 	    return;
 	}
 	luwrain.closeApp();

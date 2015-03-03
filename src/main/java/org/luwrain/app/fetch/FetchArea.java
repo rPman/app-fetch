@@ -27,23 +27,30 @@ class FetchArea extends SimpleArea
 {
     private Luwrain luwrain;
     private Actions actions;
-    private StringConstructor stringConstructor;
+    private Strings strings;
 
     public FetchArea(Luwrain luwrain,
 		     Actions actions,
-		     StringConstructor stringConstructor)
+		     Strings strings)
     {
-	super(new DefaultControlEnvironment(luwrain), stringConstructor.appName());
+	super(new DefaultControlEnvironment(luwrain), strings.appName());
 	this.luwrain = luwrain;
 	this.actions = actions;
-	this.stringConstructor = stringConstructor;
-	addLine(stringConstructor.pressEnterToStart());
-	addLine("");
+	this.strings = strings;
+	if (luwrain == null)
+	    throw new NullPointerException("luwrain may not be null");
+	if (actions == null)
+	    throw new NullPointerException("actions may not be null");
+	if (strings == null)
+	    throw new NullPointerException("strings may not be null");
+	addLine(strings.pressEnterToStart());
 	addLine("");
     }
 
-    public boolean onKeyboardEvent(KeyboardEvent event)
+    @Override public boolean onKeyboardEvent(KeyboardEvent event)
     {
+	if (event == null)
+	    throw new NullPointerException("event may not be null");
 	if (event.isCommand() && !event.isModified() &&
 	    event.getCommand() == KeyboardEvent.ENTER)
 	{
@@ -53,8 +60,10 @@ class FetchArea extends SimpleArea
 	return super.onKeyboardEvent(event);
     }
 
-    public boolean onEnvironmentEvent(EnvironmentEvent event)
+    @Override public boolean onEnvironmentEvent(EnvironmentEvent event)
     {
+	if (event == null)
+	    throw new NullPointerException("event may not be null");
 	switch(event.getCode())
 	{
 	case EnvironmentEvent.THREAD_SYNC:
@@ -63,14 +72,14 @@ class FetchArea extends SimpleArea
 		setLine(getLineCount() - 1, messageLineEvent.message); else
 		addLine(messageLineEvent.message);
 	    addLine("");
-	    if (messageLineEvent.message.equals(stringConstructor.fetchingCompleted()))
-		luwrain.message(messageLineEvent.message);
+	    if (messageLineEvent.message.equals(strings.fetchingCompleted()))
+		luwrain.message(messageLineEvent.message, Luwrain.MESSAGE_OK);
 	    return true;
 	case EnvironmentEvent.CLOSE:
 	    actions.close();
 	    return true;
 	default:
-	    return false;
+	    return super.onEnvironmentEvent(event);
 	}
     }
 }

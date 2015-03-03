@@ -16,7 +16,7 @@
 
 package org.luwrain.app.fetch;
 
-public interface StringConstructor
+public interface Strings
 {
     String appName();
     String noNewsGroupsData();

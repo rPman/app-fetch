@@ -18,49 +18,56 @@ package org.luwrain.app.fetch;
 
 import java.net.*;
 import java.util.*;
+
 import org.luwrain.core.*;
 import org.luwrain.core.events.*;
 import org.luwrain.extensions.pim.*;
-//import org.luwrain.network.*;
 
 class FetchThread implements Runnable
 {
     public boolean done = false;
     private Luwrain luwrain;
-    private StringConstructor stringConstructor;
+    private Strings strings;
     private Area messageArea;
 
     public FetchThread(Luwrain luwrain,
-		       StringConstructor stringConstructor,
+		       Strings strings,
 		       Area messageArea)
     {
-	this.stringConstructor = stringConstructor;
+	this.luwrain = luwrain;
+	this.strings = strings;
 	this.messageArea = messageArea;
+	if (luwrain == null)
+	    throw new NullPointerException("luwrain may not be null");
+	if (strings == null)
+	    throw new NullPointerException("strings may not be null");
+	if (messageArea == null)
+	    throw new NullPointerException("messageArea may not be null");
     }
 
     private void fetchNews()
     {
-	NewsStoring newsStoring = null;//luwrain.getPimManager().getNewsStoring();//FIXME:In independent connection;
-	if (newsStoring == null)
+	final Object o = luwrain.getSharedObject("luwrain.pim.news");
+	if (o == null || !(o instanceof NewsStoring))
 	{
-	    Log.error("fetch", "No news storing object");
-	    message(stringConstructor.noNewsGroupsData());
+	    message(strings.noNewsGroupsData());
 	    return;
 	}
+	final NewsStoring newsStoring = (NewsStoring)o;
 	StoredNewsGroup[] groups;
 	try {
 	    groups = newsStoring.loadNewsGroups();
 	}
 	catch (Exception e)
 	{
-	    message(stringConstructor.newsGroupsError());
+	    message(strings.newsGroupsError());
 	    Log.error("fetch", "the problem while getting list of news groups:" + e.getMessage());
 	    e.printStackTrace();
 	    return;
 	}
 	if (groups == null || groups.length < 1)
 	{
-	    message(stringConstructor.noNewsGroups());
+	    message(strings.noNewsGroups());
 	    return;
 	}
 	for(StoredNewsGroup g: groups)
@@ -70,7 +77,7 @@ class FetchThread implements Runnable
 	    }
 	    catch (Exception e)
 	    {
-		message(stringConstructor.newsFetchingError(g.getName()));
+		message(strings.newsFetchingError(g.getName()));
 		Log.error("fetch", "the problem while fetching and saving news in group \'" + g.getName() + "\':" + e.getMessage());
 		e.printStackTrace();
 	    }
@@ -93,14 +100,14 @@ class FetchThread implements Runnable
 	for(int k = 0;k < freshNews.size();k++)
 	    newsStoring.saveNewsArticle(group, freshNews.get(k));
 	if (freshNews.size() > 0 )
-	    message(stringConstructor.newsGroupFetched(group.getName(), freshNews.size(), totalCount));
+	    message(strings.newsGroupFetched(group.getName(), freshNews.size(), totalCount));
     }
 
-    public void run()
+    @Override public void run()
     {
 	done = false;
 	fetchNews();
-	message(stringConstructor.fetchingCompleted());
+	message(strings.fetchingCompleted());
 	done = true;
     }
 

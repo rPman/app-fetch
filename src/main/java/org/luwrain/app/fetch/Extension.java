@@ -68,6 +68,7 @@ public class Extension implements org.luwrain.core.Extension
     {
 	i18nExt.addCommandTitle("en", "fetch", "News fetching");
 	i18nExt.addCommandTitle("ru", "fetch", "Доставка новостей");
+	i18nExt.addStrings("ru", "luwrain.fetch", new org.luwrain.app.fetch.i18n.Ru());
     }
 
     @Override public org.luwrain.mainmenu.Item[] getMainMenuItems(CommandEnvironment env)

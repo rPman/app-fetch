@@ -21,25 +21,33 @@ import java.util.*;
 import java.io.*;
 import com.sun.syndication.feed.synd.*;
 import com.sun.syndication.io.*;
+
 import org.luwrain.extensions.pim.NewsArticle;
+import org.luwrain.util.MlTagStrip;
 
 public class FeedReader
 {
     public static NewsArticle[] readFeed(URL url) throws IOException, FeedException
     {
+	if (url == null)
+	    throw new NullPointerException("url may not be null");
+	System.out.println("url="+url.toString());
 	Vector<NewsArticle> articles = new Vector<NewsArticle>();
 	XmlReader reader = null;
 	try {
 	    reader = new XmlReader(url);
+	    System.out.println("Creating feed");
 	    SyndFeed feed = new SyndFeedInput().build(reader);
+	    System.out.println("Feed created");
 	    for (Iterator i = feed.getEntries().iterator(); i.hasNext();)
 	    {
                 SyndEntry entry = (SyndEntry) i.next();
 		NewsArticle article = new NewsArticle();
+		//		System.out.println("new news article");
 		if (feed.getTitle() != null)
-		    article.sourceTitle = feed.getTitle();
+		    article.sourceTitle = MlTagStrip.run(feed.getTitle());
 		if (entry.getTitle() != null)
-		    article.title = entry.getTitle();
+		    article.title = MlTagStrip.run(entry.getTitle());
 		if (entry.getUri() != null)
 		    article.uri = entry.getUri();
 		if (entry.getLink() != null)
@@ -49,22 +57,30 @@ public class FeedReader
 		if (entry.getUpdatedDate() != null)
 		    article.updatedDate = entry.getUpdatedDate();
 		if (entry.getAuthor() != null)
-		    article.author = entry.getAuthor();
-		//FIXME:category;
-		article.content = "";
+		    article.author = MlTagStrip.run(entry.getAuthor());
 		List contents = entry.getContents();
-		if (contents.size() > 0)
+		if (contents != null)
 		{
-		    for(Object o: contents)
-			if (o instanceof SyndContentImpl)
-			{
-			    SyndContentImpl content = (SyndContentImpl)o;
-			    article.content += content.getValue();
-			}
-		} else
-		{
-		    SyndContent content = entry.getDescription();
-		    article.content = content.getValue();
+		    if (contents.size() > 0)
+		    {
+			for(Object o: contents)
+			    if (o != null && o instanceof SyndContentImpl)
+			    {
+				System.out.println("a1");
+				SyndContentImpl content = (SyndContentImpl)o;
+				if (content.getValue() != null)
+				    article.content += content.getValue();
+				System.out.println("a2");
+			    }
+		    } else
+		    {
+			System.out.println("b1");
+			SyndContent content = entry.getDescription();
+			System.out.println("b2");
+			if (content != null)
+			    article.content = content.getValue();
+			System.out.println("b3");
+		    }
 		}
 
 

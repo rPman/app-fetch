@@ -31,19 +31,15 @@ public class FeedReader
     {
 	if (url == null)
 	    throw new NullPointerException("url may not be null");
-	System.out.println("url="+url.toString());
 	Vector<NewsArticle> articles = new Vector<NewsArticle>();
 	XmlReader reader = null;
 	try {
 	    reader = new XmlReader(url);
-	    System.out.println("Creating feed");
 	    SyndFeed feed = new SyndFeedInput().build(reader);
-	    System.out.println("Feed created");
 	    for (Iterator i = feed.getEntries().iterator(); i.hasNext();)
 	    {
                 SyndEntry entry = (SyndEntry) i.next();
 		NewsArticle article = new NewsArticle();
-		//		System.out.println("new news article");
 		if (feed.getTitle() != null)
 		    article.sourceTitle = MlTagStrip.run(feed.getTitle());
 		if (entry.getTitle() != null)
@@ -66,24 +62,17 @@ public class FeedReader
 			for(Object o: contents)
 			    if (o != null && o instanceof SyndContentImpl)
 			    {
-				System.out.println("a1");
 				SyndContentImpl content = (SyndContentImpl)o;
 				if (content.getValue() != null)
 				    article.content += content.getValue();
-				System.out.println("a2");
 			    }
 		    } else
 		    {
-			System.out.println("b1");
 			SyndContent content = entry.getDescription();
-			System.out.println("b2");
 			if (content != null)
 			    article.content = content.getValue();
-			System.out.println("b3");
 		    }
 		}
-
-
 		articles.add(article);
 	    }
 	}

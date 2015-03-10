@@ -53,7 +53,13 @@ class FetchThread implements Runnable
 	    message(strings.noNewsGroupsData());
 	    return;
 	}
-	final NewsStoring newsStoring = (NewsStoring)o;
+	NewsStoring newsStoring = (NewsStoring)o;
+	newsStoring = (NewsStoring)newsStoring.clone();
+	if (newsStoring == null)
+	{
+	    message(strings.noNewsGroupsData());
+	    return;
+	}
 	StoredNewsGroup[] groups;
 	try {
 	    groups = newsStoring.loadNewsGroups();

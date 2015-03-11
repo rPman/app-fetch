@@ -26,6 +26,7 @@ import org.luwrain.extensions.pim.*;
 class FetchThread implements Runnable
 {
     public boolean done = false;
+    public boolean interrupting = false;
     private Luwrain luwrain;
     private Strings strings;
     private Area messageArea;
@@ -67,7 +68,6 @@ class FetchThread implements Runnable
 	catch (Exception e)
 	{
 	    message(strings.newsGroupsError());
-	    Log.error("fetch", "the problem while getting list of news groups:" + e.getMessage());
 	    e.printStackTrace();
 	    return;
 	}
@@ -87,6 +87,8 @@ class FetchThread implements Runnable
 		Log.error("fetch", "the problem while fetching and saving news in group \'" + g.getName() + "\':" + e.getMessage());
 		e.printStackTrace();
 	    }
+	    if (interrupting)
+		break;
 	}
     }
 
@@ -97,14 +99,22 @@ class FetchThread implements Runnable
 	String[] urls = group.getUrls();
 	for (int k = 0;k < urls.length;k++)
 	{
+	    if (interrupting)
+		return;
 	    NewsArticle[] articles = FeedReader.readFeed(new URL(urls[k]));
+	    if (interrupting)
+		return;
 	    totalCount += articles.length;
 	    for(NewsArticle a: articles)
 		if (newsStoring. countArticlesByUriInGroup(group, a.uri) == 0)
 		    freshNews.add(a);
 	}
 	for(int k = 0;k < freshNews.size();k++)
+	{
 	    newsStoring.saveNewsArticle(group, freshNews.get(k));
+	    if (interrupting)
+		return;
+	}
 	if (freshNews.size() > 0 )
 	    message(strings.newsGroupFetched(group.getName(), freshNews.size(), totalCount));
     }
@@ -112,8 +122,13 @@ class FetchThread implements Runnable
     @Override public void run()
     {
 	done = false;
+	message(strings.startingNewsFetching());
+	message("--------------------------------------------------");
 	fetchNews();
-	message(strings.fetchingCompleted());
+	message("--------------------------------------------------");
+	if (!interrupting)
+	    message(strings.fetchingCompleted()); else
+	    message(strings.interrupted());
 	done = true;
     }
 

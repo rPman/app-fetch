@@ -25,6 +25,8 @@ public interface Strings
     String noNewsGroups();
     String newsFetchingError(String groupName);
     String newsGroupFetched(String name, int fresh, int total);
+    String startingNewsFetching();
+    String interrupted();
     String pressEnterToStart();
     String processAlreadyRunning();
     String processNotFinished();

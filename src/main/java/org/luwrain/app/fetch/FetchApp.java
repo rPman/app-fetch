@@ -24,6 +24,7 @@ public class FetchApp implements Application, Actions
     private Strings strings;
     private FetchArea fetchArea;
     private FetchThread fetchThread ;
+    private Thread thread;
 
     @Override public boolean onLaunch(Luwrain luwrain)
     {
@@ -50,7 +51,19 @@ public class FetchApp implements Application, Actions
 	}
 	fetchArea.clear();
 	fetchThread = new FetchThread(luwrain, strings, fetchArea);
-	new Thread(fetchThread).start();
+	thread = new Thread(fetchThread);
+thread.start();
+    }
+
+    @Override public boolean interrupt()
+    {
+	if (thread == null)
+	    return false;
+	if (fetchThread != null & fetchThread.done)
+	    return false;
+	fetchThread.interrupting = true;
+	thread.interrupt();
+	return true;
     }
 
     @Override public AreaLayout getAreasToShow()

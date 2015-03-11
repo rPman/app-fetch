@@ -19,5 +19,6 @@ package org.luwrain.app.fetch;
 interface Actions
 {
     void launchFetching();
+    boolean interrupt();
     void close();
 }

@@ -20,7 +20,7 @@ public class Ru implements org.luwrain.app.fetch.Strings
 {
     @Override public String appName()
     {
-	return "Доставка почты и новостей";
+	return "Доставка новостей";
     }
 
     @Override public String noNewsGroupsData()
@@ -52,7 +52,9 @@ public class Ru implements org.luwrain.app.fetch.Strings
 					     int fresh,
 					     int total)
     {
-	return name + ": " + fresh + " новых из " + total;
+	if (fresh == 1)
+	return name + ": " + fresh + " новая из " + total; else
+	    return name + ": " + fresh + " новых из " + total;
     }
 
     @Override public String pressEnterToStart()
@@ -120,5 +122,15 @@ public class Ru implements org.luwrain.app.fetch.Strings
     public String fetchedMailMessages(int count)
     {
 	return "Получено сообщений: " + count;
+    }
+
+    @Override public String startingNewsFetching()
+    {
+	return "Выполняется доставка новостей";
+    }
+
+    @Override public String interrupted()
+    {
+	return "Доставка прервана пользователем";
     }
 }

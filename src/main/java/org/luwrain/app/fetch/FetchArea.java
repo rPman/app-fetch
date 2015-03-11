@@ -57,6 +57,9 @@ class FetchArea extends SimpleArea
 	    actions.launchFetching();
 	    return true;
 	}
+	if (event.isCommand() && !event.isModified() &&
+	    event.getCommand() == KeyboardEvent.ESCAPE)
+return actions.interrupt();
 	return super.onKeyboardEvent(event);
     }
 

@@ -22,6 +22,7 @@ import java.util.*;
 import java.io.*;
 
 import javax.mail.*;
+import javax.mail.internet.MimeMessage.RecipientType;
 import javax.mail.search.ComparisonTerm;
 import javax.mail.search.ReceivedDateTerm;
 
@@ -34,17 +35,23 @@ public class EmailReader
 	static Properties props=new Properties();
 	static Session session=Session.getDefaultInstance(new Properties(), null); // by default was used empty session for working .eml files
 	static Store store;
+	static Session smtpSession=null;
+	static Transport smtpTransport=null;
 	static Folder folder=null;
-	static Message message=null;
-	// part of file path for store cache, for example folder directory as is or serialized file as cachePathNameChunk+".ser" 
-	static String cachePathNameChunk=null;
 	// max number messages count to load from big email folders when first loaded (limit for testing)
 	static final int LIMIT_MESSAGES_LOAD=15;
 	
-	// TODO: remove this crap, used only for sending
+	// TODO: remove this crap, used only for sending emails
 	static String login,password;
 	
-	public static void InitServerConnection(HashMap<String,String> settings,String host,String login,String password) throws Exception
+	// used in getEmails to make decision, how many information to be loaded from server  
+	public static abstract class Stopper
+	{
+		boolean StopAfterOnline(EmailMessage message){return false;}
+		boolean StopAfterBaseFields(EmailMessage message){return false;}
+	}
+	
+	public static void InitServerConnectionForRead(HashMap<String,String> settings,String host,String login,String password) throws Exception
 	{
 		props.clear();
 		for(Map.Entry<String,String> p:settings.entrySet()) props.put(p.getKey(), p.getValue());
@@ -55,6 +62,22 @@ public class EmailReader
 		store = session.getStore();
 		store.connect(host,login,password);
 	}
+	
+	public static void InitServerConnectionForSend(HashMap<String,String> settings,String host,String login,String password) throws Exception
+	{
+		smtpSession = Session.getInstance(props,new Authenticator(){ protected PasswordAuthentication getPasswordAuthentication(){return new PasswordAuthentication(login, password);}});
+		smtpTransport=smtpSession.getTransport("smtp");
+		smtpTransport.connect();
+	}
+	
+	// used to init smtp connection after initialised pop3/imap 
+	public static void InitServerConnectionForSend() throws Exception
+	{
+		smtpSession = Session.getInstance(props,new Authenticator(){ protected PasswordAuthentication getPasswordAuthentication(){return new PasswordAuthentication(login, password);}});
+		smtpTransport=smtpSession.getTransport("smtp");
+		smtpTransport.connect();
+	}
+
 	public static String[] getFolderNames() throws Exception
 	{
 		Folder[] folders=store.getDefaultFolder().list();
@@ -63,8 +86,9 @@ public class EmailReader
 		return result;
 	}
 	// fetch emails from server, folder name can be INBOX or any other IMAP folder name
-	// can be limited via receivedDate<lastReceived if it not null
-	public static <StoredEmailMessageSql> EmailMessage[] getEmails(String folderName,Date lastReceived) throws Exception
+	// list can be limited via receivedDate<lastReceived if it not null
+	// stopper can be null or user object based on EmailReader.Stopper class
+	public static EmailMessage[] getEmails(String folderName,Date lastReceived,Stopper stopper) throws Exception
     {
 		Vector<EmailMessage> result=new Vector<EmailMessage>();
 		// open folder
@@ -82,16 +106,34 @@ public class EmailReader
 			messages=folder.search(new ReceivedDateTerm(ComparisonTerm.GE,lastReceived));	
 		}
 		// fetch messages
-		for(Message message:messages)
+		EmailEssentialJavamail es=new EmailEssentialJavamail(); // FIXME: replace empty EmailEssentialJavamail to instance from luwrain.getSharedObject("luwrain.pim.email");  
+		for(Message jmailmsg:messages)
 		{
-			EmailStoringSql es=new EmailStoringSql(); // FIXME: fix class usage for email storing 
-			es.setOnlineMessageObject(message);
-			es.readJavamailMessageBaseFields();
-			es.readJavamailMessageOnline();
-			result.add(es);
+			EmailMessage message=new EmailMessage();
+			es.jmailmsg=jmailmsg;
+			es.readJavamailMessageOnline(message); // get email essential
+			if(stopper==null||stopper.StopAfterOnline(message)) continue;
+			es.readJavamailMessageBaseFields(message); // get usual fields
+			if(stopper==null||stopper.StopAfterBaseFields(message)) continue;
+			es.readJavamailMessageContent(message); // get full content
+			result.add(message);
+		}
+		return (EmailMessage[]) result.toArray();
+    }
+	
+	// send emails to already connected smtp session
+	public static void sendEmails(EmailMessage[] emails) throws Exception
+	{
+		// TODO: add localisation support to error message
+		if(smtpTransport==null) throw new Exception("SMTP connection must be initialised");
+		EmailEssentialJavamail es=new EmailEssentialJavamail(); // FIXME: replace empty EmailEssentialJavamail to instance from luwrain.getSharedObject("luwrain.pim.email");
+		for(EmailMessage message: emails)
+		{
+			es.PrepareInternalStore(message);
+			smtpTransport.sendMessage(es.jmailmsg,es.jmailmsg.getRecipients(RecipientType.TO));
+			// TODO: need to manage address list for CC, BCC and hidden copy?
 		}
 		
 		
-		return (EmailMessage[]) result.toArray();
-    }
+	}
 }
